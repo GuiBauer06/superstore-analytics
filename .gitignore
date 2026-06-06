@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Dados grandes / arquivos locais opcionais
+data/*.xlsx
+data/*.xls
+
+# Docker volumes
+postgres_data/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: superstore-postgres
+    environment:
+      POSTGRES_DB: superstore_dw
+      POSTGRES_USER: dw_user
+      POSTGRES_PASSWORD: dw_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dw_user -d superstore_dw"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - superstore-net
+
+  etl:
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    container_name: superstore-etl
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: superstore_dw
+      DB_USER: dw_user
+      DB_PASSWORD: dw_pass
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data:ro
+      - ./sql:/sql:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - superstore-net
+    restart: "no"
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: superstore-dashboard
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: superstore_dw
+      DB_USER: dw_user
+      DB_PASSWORD: dw_pass
+    ports:
+      - "8501:8501"
+    depends_on:
+      etl:
+        condition: service_completed_successfully
+    networks:
+      - superstore-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  superstore-net:
+    driver: bridge
