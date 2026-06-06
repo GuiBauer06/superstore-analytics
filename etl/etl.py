@@ -165,10 +165,23 @@ def build_tempo_rows(dates: pd.Series) -> list:
     return rows
 
 
+def dedupe_rows(rows: list, key_index: int = 0) -> list:
+    """Remove duplicatas no mesmo lote (exigido pelo ON CONFLICT do PostgreSQL)."""
+    seen = set()
+    unique = []
+    for row in rows:
+        key = row[key_index]
+        if key not in seen:
+            seen.add(key)
+            unique.append(row)
+    return unique
+
+
 def upsert_dimension(conn, table: str, columns: list, rows: list, conflict_col: str,
-                     select_sql: str) -> dict:
+                     select_sql: str, key_index: int = 0) -> dict:
     if not rows:
         return {}
+    rows = dedupe_rows(rows, key_index)
     placeholders = ", ".join(columns)
     update_cols = [c for c in columns if c != conflict_col]
     if update_cols:
@@ -203,7 +216,10 @@ def load_dimensions(conn, df: pd.DataFrame) -> dict:
         cur.execute("SELECT data, sk_tempo FROM dw.dim_tempo")
         tempo_map = {row[0]: row[1] for row in cur.fetchall()}
 
-    produto_rows = df[["product_id", "product_name", "category", "sub_category"]].drop_duplicates()
+    produto_rows = (
+        df[["product_id", "product_name", "category", "sub_category"]]
+        .drop_duplicates(subset=["product_id"], keep="first")
+    )
     produto_rows = [
         (r.product_id, r.product_name, r.category, r.sub_category)
         for r in produto_rows.itertuples(index=False)
@@ -215,7 +231,10 @@ def load_dimensions(conn, df: pd.DataFrame) -> dict:
         "SELECT product_id, sk_produto FROM dw.dim_produto",
     )
 
-    cliente_rows = df[["customer_id", "customer_name", "segment"]].drop_duplicates()
+    cliente_rows = (
+        df[["customer_id", "customer_name", "segment"]]
+        .drop_duplicates(subset=["customer_id"], keep="first")
+    )
     cliente_rows = [
         (r.customer_id, r.customer_name, r.segment)
         for r in cliente_rows.itertuples(index=False)
@@ -227,10 +246,14 @@ def load_dimensions(conn, df: pd.DataFrame) -> dict:
         "SELECT customer_id, sk_cliente FROM dw.dim_cliente",
     )
 
-    loc_rows = df[["country", "region", "state", "city", "postal_code"]].drop_duplicates()
+    loc_df = df[["country", "region", "state", "city", "postal_code"]].copy()
+    loc_df["postal_code"] = loc_df["postal_code"].apply(normalize_cep)
+    loc_df = loc_df.drop_duplicates(
+        subset=["country", "region", "state", "city", "postal_code"], keep="first"
+    )
     loc_rows = [
-        (r.country, r.region, r.state, r.city, normalize_cep(r.postal_code))
-        for r in loc_rows.itertuples(index=False)
+        (r.country, r.region, r.state, r.city, r.postal_code)
+        for r in loc_df.itertuples(index=False)
     ]
     with conn.cursor() as cur:
         execute_values(
@@ -240,7 +263,7 @@ def load_dimensions(conn, df: pd.DataFrame) -> dict:
             VALUES %s
             ON CONFLICT (pais, regiao, estado, cidade, cep) DO NOTHING
             """,
-            loc_rows,
+            list(dict.fromkeys(loc_rows)),
         )
     conn.commit()
 
