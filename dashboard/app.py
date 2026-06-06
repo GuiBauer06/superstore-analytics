@@ -31,10 +31,7 @@ def get_connection():
 @st.cache_data(ttl=300)
 def run_query(sql: str, params=None) -> pd.DataFrame:
     conn = get_connection()
-    try:
-        return pd.read_sql(sql, conn, params=params)
-    finally:
-        conn.close()
+    return pd.read_sql(sql, conn, params=params)
 
 
 def format_currency(value: float) -> str:
