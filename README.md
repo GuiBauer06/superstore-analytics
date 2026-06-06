@@ -43,9 +43,9 @@ Solução completa de Business Intelligence para a empresa **Superstore Sales**,
 
 ### 1. Dados fonte
 
-Coloque o arquivo `Superstore_e-commerce.xlsx` na pasta `data/`.
+O arquivo oficial `Superstore_e-commerce.xlsx` já está em `data/` (aba **SuperStore**, 9.994 registros, colunas em português).
 
-> O projeto já inclui `data/Sample-Superstore.csv` (dataset equivalente ao Sample Superstore da Tableau) para execução imediata. O ETL aceita tanto `.xlsx` quanto `.csv`.
+> O ETL também aceita `Sample-Superstore.csv` (formato em inglês) como alternativa.
 
 ### 2. Subir a plataforma
 

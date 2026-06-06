@@ -79,6 +79,7 @@ def load_raw_data(path: Path) -> pd.DataFrame:
 
     df.columns = [c.strip().lstrip("\ufeff") for c in df.columns]
     rename_map = {
+        # Formato em inglês (Sample Superstore)
         "Row ID": "row_id",
         "Order ID": "order_id",
         "Order Date": "order_date",
@@ -100,12 +101,42 @@ def load_raw_data(path: Path) -> pd.DataFrame:
         "Quantity": "quantity",
         "Discount": "discount",
         "Profit": "profit",
+        # Formato em português (Superstore_e-commerce.xlsx oficial)
+        "ID_Linha": "row_id",
+        "ID_Pedido": "order_id",
+        "Dta_Pedido": "order_date",
+        "Dta_Envio": "ship_date",
+        "Envio_Forma": "ship_mode",
+        "ID_Cliente": "customer_id",
+        "Nme_Cliente": "customer_name",
+        "Segmento": "segment",
+        "Pais": "country",
+        "Cidade": "city",
+        "Estado": "state",
+        "Codigo_Postal": "postal_code",
+        "Regiao": "region",
+        "ID_Produto": "product_id",
+        "Categoria_Produto": "category",
+        "Sub-categoria_Produto": "sub_category",
+        "Nme_Produto": "product_name",
+        "Vendas": "sales",
+        "Quantidade_Itens": "quantity",
+        "Desconto": "discount",
+        "Lucro": "profit",
     }
     df = df.rename(columns=rename_map)
-    required = list(rename_map.values())
+    required = [
+        "row_id", "order_id", "order_date", "ship_date", "ship_mode",
+        "customer_id", "customer_name", "segment", "country", "city",
+        "state", "postal_code", "region", "product_id", "category",
+        "sub_category", "product_name", "sales", "quantity", "profit",
+    ]
     missing = [c for c in required if c not in df.columns]
     if missing:
         raise ValueError(f"Colunas ausentes no arquivo fonte: {missing}")
+
+    if "discount" not in df.columns:
+        df["discount"] = 0.0
 
     df["order_date"] = pd.to_datetime(df["order_date"])
     df["ship_date"] = pd.to_datetime(df["ship_date"])

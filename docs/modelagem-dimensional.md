@@ -82,17 +82,21 @@ Granularidade: **uma linha por item vendido** (Row ID do arquivo fonte).
 
 ## 5. Mapeamento Fonte → Modelo
 
-| Coluna XLSX | Destino |
-|-------------|---------|
-| Row ID | fato_vendas.row_id |
-| Order ID | fato_vendas.order_id |
-| Order Date | dim_tempo (pedido) |
-| Ship Date | dim_tempo (envio) |
-| Ship Mode | dim_envio |
-| Customer ID / Name / Segment | dim_cliente |
-| Country / Region / State / City / Postal Code | dim_localizacao |
-| Product ID / Category / Sub-Category / Product Name | dim_produto |
-| Sales / Quantity / Discount / Profit | fato_vendas |
+O arquivo `Superstore_e-commerce.xlsx` (aba **SuperStore**) utiliza colunas em português:
+
+| Coluna XLSX (PT) | Coluna interna | Destino |
+|------------------|----------------|---------|
+| ID_Linha | row_id | fato_vendas.row_id |
+| ID_Pedido | order_id | fato_vendas.order_id |
+| Dta_Pedido | order_date | dim_tempo (pedido) |
+| Dta_Envio | ship_date | dim_tempo (envio) |
+| Envio_Forma | ship_mode | dim_envio |
+| ID_Cliente / Nme_Cliente / Segmento | customer_* / segment | dim_cliente |
+| Pais / Regiao / Estado / Cidade / Codigo_Postal | country / region / ... | dim_localizacao |
+| ID_Produto / Categoria_Produto / Sub-categoria_Produto / Nme_Produto | product_* / category / ... | dim_produto |
+| Vendas / Quantidade_Itens / Lucro | sales / quantity / profit | fato_vendas |
+
+O ETL também aceita o formato em inglês (Sample Superstore). Quando a coluna Desconto/Discount não existir, assume `0`.
 
 ## 6. Questões de Negócio → Views
 

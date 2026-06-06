@@ -4,8 +4,9 @@ __pycache__/
 .venv/
 venv/
 
-# Dados grandes / arquivos locais opcionais
+# Dados locais opcionais (o arquivo oficial do trabalho é versionado)
 data/*.xlsx
+!data/Superstore_e-commerce.xlsx
 data/*.xls
 
 # Docker volumes
